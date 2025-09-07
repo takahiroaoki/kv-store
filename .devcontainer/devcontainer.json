@@ -1,7 +1,7 @@
 {
 	"name": "kv-store",
 	"dockerComposeFile": "docker-compose.yaml",
-  "service": "kv-store",
+	"service": "kv-store",
 	"workspaceFolder": "/workspaces/kv-store",
 	"customizations": {
 		"vscode": {
