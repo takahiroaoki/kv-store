@@ -9,7 +9,7 @@ RUN dnf install -y \
      && rm -rf /var/cache/dnf/* \
      && dnf clean all
 
-#RUN    go install github.com/golang/mock/mockgen@v1.6 \
+RUN go install github.com/golang/mock/mockgen@v1.6
 #    && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
 
-#ENV PATH $PATH:/root/go/bin
+ENV PATH $PATH:/root/go/bin
