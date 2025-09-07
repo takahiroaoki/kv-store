@@ -1,0 +1,17 @@
+{
+	"name": "kv-store",
+	"dockerComposeFile": "docker-compose.yaml",
+  "service": "kv-store",
+	"workspaceFolder": "/workspaces/kv-store",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.Go",
+				"ms-azuretools.vscode-docker",
+				"Postman.postman-for-vscode",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
+			]
+		}
+	}
+}
