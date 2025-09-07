@@ -1,0 +1,11 @@
+services:
+  kv-store:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/kv-store
+    working_dir: /workspaces/kv-store
+    ports:
+      - 3000:3000
+    tty: true
