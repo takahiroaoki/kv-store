@@ -7,21 +7,25 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/takahiroaoki/kv-store/app/infra/server"
+	"github.com/takahiroaoki/kv-store/app/config"
+	"github.com/takahiroaoki/kv-store/app/service"
+	"github.com/takahiroaoki/kv-store/app/storage"
 	"github.com/takahiroaoki/kv-store/app/util"
 )
 
 func main() {
-	runServer()
-}
+	storage, appErr := storage.NewStorage(config.NewStorageConfig())
+	if appErr != nil {
+		util.FatalLog(fmt.Sprintf("Failed to initialize storage: %v", appErr.Error()))
+		return
+	}
 
-func runServer() {
 	// Prepare grpc server settings
+	server := service.NewGRPCServer(storage)
 	lis, err := net.Listen("tcp", ":3000")
 	if err != nil {
 		util.FatalLog(fmt.Sprintf("Failed to listen: %v", err))
 	}
-	server := server.NewGRPCServer()
 
 	// Run
 	go func() {
