@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    environment:
+      - STORAGE_DIR=/workspaces/kv-store/storage
     volumes:
       - ..:/workspaces/kv-store
     working_dir: /workspaces/kv-store
