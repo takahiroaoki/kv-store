@@ -18,7 +18,7 @@ type storage struct {
 }
 
 func NewStorage(sc config.StorageConfig) (Storage, util.AppErr) {
-	if err := os.MkdirAll(sc.LogDir(), 0755); err != nil {
+	if err := os.MkdirAll(sc.StorageDir(), 0755); err != nil {
 		return nil, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
 	}
 	return &storage{

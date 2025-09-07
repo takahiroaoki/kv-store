@@ -1,5 +1,5 @@
 # data files
-storage/**/*.csv
+storage/*.csv
 
 # generated mocks by mockgen
 *_mock.go
