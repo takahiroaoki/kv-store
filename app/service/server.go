@@ -1,11 +1,8 @@
 package service
 
 import (
-	"context"
-
-	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/service/interceptor"
-	"github.com/takahiroaoki/kv-store/app/util"
+	"github.com/takahiroaoki/kv-store/app/storage"
 	pb "github.com/takahiroaoki/protobuf/gen_go/proto/kv_store/v1"
 
 	"google.golang.org/grpc"
@@ -16,16 +13,16 @@ import (
 
 type kvServiceServer struct {
 	pb.UnimplementedKVStoreServiceServer
-	storage Storage
+	storage storage.Storage
 }
 
-func newKVServiceServer(storage Storage) pb.KVStoreServiceServer {
+func newKVServiceServer(storage storage.Storage) pb.KVStoreServiceServer {
 	return &kvServiceServer{
 		storage: storage,
 	}
 }
 
-func NewGRPCServer(storage Storage) *grpc.Server {
+func NewGRPCServer(storage storage.Storage) *grpc.Server {
 	s := grpc.NewServer(grpc.UnaryInterceptor(
 		middleware.ChainUnaryServer(
 			interceptor.SetContext(),
@@ -35,8 +32,4 @@ func NewGRPCServer(storage Storage) *grpc.Server {
 	reflection.Register(s)
 	pb.RegisterKVStoreServiceServer(s, newKVServiceServer(storage))
 	return s
-}
-
-type Storage interface {
-	InsertKeyValue(ctx context.Context, kv model.KeyValue) util.AppErr
 }

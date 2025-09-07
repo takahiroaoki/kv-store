@@ -10,7 +10,8 @@
 				"ms-azuretools.vscode-docker",
 				"Postman.postman-for-vscode",
 				"GitHub.copilot",
-				"GitHub.copilot-chat"
+				"GitHub.copilot-chat",
+				"seatonjiang.gitmoji-vscode"
 			]
 		}
 	}
