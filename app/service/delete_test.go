@@ -7,58 +7,49 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
-	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/storage"
 	"github.com/takahiroaoki/kv-store/app/util"
 	pb "github.com/takahiroaoki/protobuf/gen_go/proto/kv_store/v1"
 )
 
-func TestKvServiceServer_Set(t *testing.T) {
+func TestKvServiceServer_Delete(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		ctx context.Context
-		req *pb.SetRequest
+		req *pb.DeleteRequest
 	}
 	tests := []struct {
 		name       string
 		args       args
 		setupMock  func(s *storage.MockStorage)
 		assertion  assert.ErrorAssertionFunc
-		want       *pb.SetResponse
+		want       *pb.DeleteResponse
 		wantErrMsg string
 	}{
 		{
 			name: "success",
 			args: args{
 				ctx: context.Background(),
-				req: &pb.SetRequest{
-					Key:   "key",
-					Value: "value",
+				req: &pb.DeleteRequest{
+					Key: "key",
 				},
 			},
 			setupMock: func(s *storage.MockStorage) {
-				s.EXPECT().InsertKeyValue(gomock.Any(), model.KeyValue{
-					Key:   "key",
-					Value: "value",
-				}).Return(nil)
+				s.EXPECT().DeleteKey(gomock.Any(), "key").Return(nil)
 			},
 			assertion: assert.NoError,
-			want:      &pb.SetResponse{},
+			want:      &pb.DeleteResponse{},
 		},
 		{
 			name: "failure",
 			args: args{
 				ctx: context.Background(),
-				req: &pb.SetRequest{
-					Key:   "key",
-					Value: "value",
+				req: &pb.DeleteRequest{
+					Key: "key",
 				},
 			},
 			setupMock: func(s *storage.MockStorage) {
-				s.EXPECT().InsertKeyValue(gomock.Any(), model.KeyValue{
-					Key:   "key",
-					Value: "value",
-				}).Return(util.NewAppErr(errors.New("error"), util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR))
+				s.EXPECT().DeleteKey(gomock.Any(), "key").Return(util.NewAppErr(errors.New("error"), util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR))
 			},
 			assertion:  assert.Error,
 			want:       nil,
@@ -76,7 +67,7 @@ func TestKvServiceServer_Set(t *testing.T) {
 			s := &kvServiceServer{
 				storage: mockStorage,
 			}
-			got, err := s.Set(tt.args.ctx, tt.args.req)
+			got, err := s.Delete(tt.args.ctx, tt.args.req)
 			tt.assertion(t, err)
 			if err != nil {
 				assert.EqualError(t, err, tt.wantErrMsg)
