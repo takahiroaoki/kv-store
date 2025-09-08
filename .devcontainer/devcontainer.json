@@ -1,6 +1,6 @@
 {
 	"name": "kv-store",
-	"dockerComposeFile": "docker-compose.yaml",
+	"dockerComposeFile": "docker-compose.yml",
 	"service": "kv-store",
 	"workspaceFolder": "/workspaces/kv-store",
 	"customizations": {
