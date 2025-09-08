@@ -1,6 +1,9 @@
 run:
 	cd app && go run main.go
 
+lint: mockgen
+	cd app && golangci-lint run
+
 test: mockgen
 	cd app && go test -v ./...
 

@@ -1,0 +1,13 @@
+name: Setup
+description: Setup
+runs:
+  using: "composite"
+  steps:
+    - name: Install
+      run: |
+        apk update \
+          && apk add git \
+          make
+        go install github.com/golang/mock/mockgen@v1.6 \
+          && go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+      shell: sh
