@@ -69,7 +69,10 @@ func (s *storage) nextLogFilePath() (string, util.AppErr) {
 			return "", appErr
 		}
 		filePath := filepath.Join(s.sc.LogDir(), nextFileName)
-		s.createFile(filePath)
+		appErr = s.createFile(filePath)
+		if appErr != nil {
+			return "", appErr
+		}
 		return filePath, nil
 	}
 
@@ -95,7 +98,10 @@ func (s *storage) nextLogFilePath() (string, util.AppErr) {
 		return "", appErr
 	}
 	nextFilePath := filepath.Join(s.sc.LogDir(), nextFileName)
-	s.createFile(nextFilePath)
+	appErr = s.createFile(nextFilePath)
+	if appErr != nil {
+		return "", appErr
+	}
 	return nextFilePath, nil
 }
 
