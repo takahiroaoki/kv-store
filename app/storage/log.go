@@ -4,10 +4,27 @@ import (
 	"context"
 	"encoding/csv"
 	"os"
+	"time"
 
 	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/util"
 )
+
+type logRow struct {
+	key       string
+	value     string
+	delFlag   string
+	updatedAt string
+}
+
+func newLogRowForSet(kv model.KeyValue) logRow {
+	return logRow{
+		key:       kv.Key,
+		value:     kv.Value,
+		delFlag:   "0",
+		updatedAt: time.Now().Format("2006-01-02T15:04:05.123"),
+	}
+}
 
 func (s *storage) currentLogFilePath() (string, util.AppErr) {
 	fileName := "log.csv"
@@ -36,7 +53,8 @@ func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) util.Ap
 	writer := csv.NewWriter(f)
 	defer writer.Flush()
 
-	if err := writer.Write([]string{kv.Key, kv.Value, "0"}); err != nil {
+	row := newLogRowForSet(kv)
+	if err := writer.Write([]string{row.key, row.value, row.delFlag, row.updatedAt}); err != nil {
 		return util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
 	}
 	return nil
