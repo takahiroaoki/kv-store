@@ -14,7 +14,12 @@ import (
 )
 
 func main() {
-	storage, appErr := storage.NewStorage(config.NewStorageConfig())
+	sc, appErr := config.NewStorageConfig()
+	if appErr != nil {
+		util.FatalLog(fmt.Sprintf("Failed to load storage config: %v", appErr.Error()))
+		return
+	}
+	storage, appErr := storage.NewStorage(sc)
 	if appErr != nil {
 		util.FatalLog(fmt.Sprintf("Failed to initialize storage: %v", appErr.Error()))
 		return

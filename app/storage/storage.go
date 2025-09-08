@@ -12,6 +12,7 @@ import (
 type Storage interface {
 	InsertKeyValue(ctx context.Context, kv model.KeyValue) util.AppErr
 	DeleteKey(ctx context.Context, key string) util.AppErr
+	GetByKey(ctx context.Context, key string) (model.KeyValue, util.AppErr)
 }
 
 type storage struct {
@@ -20,6 +21,9 @@ type storage struct {
 
 func NewStorage(sc config.StorageConfig) (Storage, util.AppErr) {
 	if err := os.MkdirAll(sc.StorageDir(), 0755); err != nil {
+		return nil, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
+	}
+	if err := os.MkdirAll(sc.LogDir(), 0755); err != nil {
 		return nil, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
 	}
 	return &storage{

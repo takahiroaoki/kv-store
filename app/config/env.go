@@ -8,11 +8,22 @@ var env *envVars
 
 func init() {
 	env = &envVars{
-		storageDir: os.Getenv("STORAGE_DIR"),
+		storageDir:      getEnv("STORAGE_DIR", "/tmp/kv-store"), // Directory to store data. Default is /tmp/kv-store.
+		rowsPerLogFile:  getEnv("ROWS_PER_LOG_FILE", "1000"),    // Number of rows per log file. Default is 1000.
+		maxPowerLogFile: getEnv("MAX_POWER_LOG_FILE", "10"),     // Log files can be created up to 10^n. Default is 10.
 	}
 }
 
 type envVars struct {
 	/* About FileSystem */
-	storageDir string
+	storageDir      string
+	rowsPerLogFile  string
+	maxPowerLogFile string
+}
+
+func getEnv(name, defaultValue string) string {
+	if value := os.Getenv(name); value != "" {
+		return value
+	}
+	return defaultValue
 }

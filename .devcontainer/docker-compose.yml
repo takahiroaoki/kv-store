@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - STORAGE_DIR=/workspaces/kv-store/storage
+      - ROWS_PER_LOG_FILE=1000
+      - MAX_POWER_LOG_FILE=10
     volumes:
       - ..:/workspaces/kv-store
     working_dir: /workspaces/kv-store

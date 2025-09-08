@@ -76,3 +76,37 @@ func Test_newLogRow(t *testing.T) {
 		})
 	}
 }
+
+func Test_newKeyValueFromLogRow(t *testing.T) {
+	t.Parallel()
+	type args struct {
+		logRow logRow
+	}
+	tests := []struct {
+		name string
+		args args
+		want model.KeyValue
+	}{
+		{
+			name: "success",
+			args: args{
+				logRow: logRow{
+					key:       "key",
+					value:     "value",
+					delFlag:   "0",
+					updatedAt: "2024-01-01T00:00:00.000",
+				},
+			},
+			want: model.KeyValue{
+				Key:   "key",
+				Value: "value",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			assert.Equal(t, tt.want, newKeyValueFromLogRow(tt.args.logRow))
+		})
+	}
+}
