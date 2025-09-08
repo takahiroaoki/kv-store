@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/csv"
 	"os"
-	"time"
 
 	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/util"
@@ -17,12 +16,16 @@ type logRow struct {
 	updatedAt string
 }
 
-func newLogRowForSet(kv model.KeyValue) logRow {
+func newLogRow(kv model.KeyValue, isDelete bool) logRow {
+	delFlag := "0"
+	if isDelete {
+		delFlag = "1"
+	}
 	return logRow{
 		key:       kv.Key,
 		value:     kv.Value,
-		delFlag:   "0",
-		updatedAt: time.Now().Format("2006-01-02T15:04:05.123"),
+		delFlag:   delFlag,
+		updatedAt: util.Now().Format(),
 	}
 }
 
@@ -39,7 +42,7 @@ func (s *storage) currentLogFilePath() (string, util.AppErr) {
 	return s.sc.StorageDir() + fileName, nil
 }
 
-func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) util.AppErr {
+func (s *storage) insertLogRow(ctx context.Context, row logRow) util.AppErr {
 	path, appErr := s.currentLogFilePath()
 	if appErr != nil {
 		return appErr
@@ -53,9 +56,16 @@ func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) util.Ap
 	writer := csv.NewWriter(f)
 	defer writer.Flush()
 
-	row := newLogRowForSet(kv)
 	if err := writer.Write([]string{row.key, row.value, row.delFlag, row.updatedAt}); err != nil {
 		return util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
 	}
 	return nil
+}
+
+func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) util.AppErr {
+	return s.insertLogRow(ctx, newLogRow(kv, false))
+}
+
+func (s *storage) DeleteKey(ctx context.Context, key string) util.AppErr {
+	return s.insertLogRow(ctx, newLogRow(model.KeyValue{Key: key}, true))
 }

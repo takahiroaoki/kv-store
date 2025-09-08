@@ -11,6 +11,7 @@ import (
 
 type Storage interface {
 	InsertKeyValue(ctx context.Context, kv model.KeyValue) util.AppErr
+	DeleteKey(ctx context.Context, key string) util.AppErr
 }
 
 type storage struct {
