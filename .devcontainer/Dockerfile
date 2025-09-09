@@ -1,4 +1,4 @@
-FROM amazonlinux:2023.7.20250331.0
+FROM amazonlinux:2023.8.20250818.0
 
 # dnf fixes tool versions
 RUN dnf install -y \

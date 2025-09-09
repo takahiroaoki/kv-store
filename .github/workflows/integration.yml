@@ -11,7 +11,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     container:
-      image: golang:1.24.1-alpine3.21
+      image: golang:1.24.5-alpine3.22
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
@@ -19,7 +19,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     container:
-      image: golang:1.24.1-alpine3.21
+      image: golang:1.24.5-alpine3.22
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
