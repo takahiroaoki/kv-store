@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+
+	"github.com/takahiroaoki/go-libs/time"
 )
 
 var contextKeysForLog = []ContextKey{REQUEST_ID}
@@ -12,11 +14,11 @@ var contextKeysForLog = []ContextKey{REQUEST_ID}
 var logger *log.Logger
 
 func init() {
-	logger = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.LUTC|log.Lmicroseconds)
+	logger = log.New(os.Stdout, "", 0)
 }
 
 func generalLog(category string, v string) {
-	logger.Printf("[%v] %v", category, v)
+	logger.Printf("%v [%v] %v", time.Now().Format("2006/01/02 15:04:05"), category, v)
 }
 
 func addContextInfo(ctx context.Context, v string) string {
