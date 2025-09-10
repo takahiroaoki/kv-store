@@ -7,9 +7,9 @@ import (
 )
 
 func (s *kvServiceServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	kv, appErr := s.storage.GetByKey(ctx, req.GetKey())
-	if appErr != nil {
-		return nil, handleError(ctx, appErr)
+	kv, libErr := s.storage.GetByKey(ctx, req.GetKey())
+	if libErr != nil {
+		return nil, handleError(ctx, libErr)
 	}
 	return &pb.GetResponse{
 		Value: kv.Value,

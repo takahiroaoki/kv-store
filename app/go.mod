@@ -7,6 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/stretchr/testify v1.11.1
+	github.com/takahiroaoki/go-libs v1.1.0
 	github.com/takahiroaoki/protobuf/gen_go v1.1.0
 	google.golang.org/grpc v1.75.0
 )
@@ -14,7 +15,6 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/takahiroaoki/go-libs v1.0.1 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.26.0 // indirect

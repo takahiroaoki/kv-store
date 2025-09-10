@@ -1,11 +1,9 @@
 package storage
 
 import (
-	"errors"
-
-	"github.com/takahiroaoki/kv-store/app/util"
+	"github.com/takahiroaoki/go-libs/errorlibs"
 )
 
 var (
-	dataNotFound = util.NewAppErr(errors.New("data not found"), util.CAUSE_NOT_FOUND, util.LOG_LEVEL_INFO)
+	dataNotFound = errorlibs.NewErrFromMsg("data not found", errorlibs.CAUSE_NOT_FOUND, errorlibs.LOG_LEVEL_INFO)
 )

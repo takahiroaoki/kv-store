@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/takahiroaoki/kv-store/app/util"
+	"github.com/takahiroaoki/go-libs/errorlibs"
 )
 
 type StorageConfig struct {
@@ -29,14 +29,14 @@ func (c *StorageConfig) LogDir() string {
 	return filepath.Join(c.storageDir, "logs")
 }
 
-func NewStorageConfig() (StorageConfig, util.AppErr) {
+func NewStorageConfig() (StorageConfig, errorlibs.Err) {
 	rowsPerLogFile, err := strconv.Atoi(env.rowsPerLogFile)
 	if err != nil {
-		return StorageConfig{}, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
+		return StorageConfig{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 	maxPowerLogFile, err := strconv.Atoi(env.maxPowerLogFile)
 	if err != nil {
-		return StorageConfig{}, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
+		return StorageConfig{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 	return StorageConfig{
 		storageDir:      env.storageDir,
