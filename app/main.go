@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	proctime "github.com/takahiroaoki/go-libs/time"
+	"github.com/takahiroaoki/go-libs/timelibs"
 	"github.com/takahiroaoki/kv-store/app/config"
 	"github.com/takahiroaoki/kv-store/app/service"
 	"github.com/takahiroaoki/kv-store/app/storage"
@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// Global setting
-	proctime.SetLocation(time.FixedZone("JST", 9*60*60))
+	timelibs.SetLocation(time.FixedZone("JST", 9*60*60))
 
 	// Prepare grpc server settings
 	sc, appErr := config.NewStorageConfig()
