@@ -4,13 +4,13 @@ import (
 	"os"
 	"sort"
 
-	"github.com/takahiroaoki/kv-store/app/util"
+	"github.com/takahiroaoki/go-libs/errorlibs"
 )
 
-func (s *storage) listFilesInDesc(dirPath string) (fileNameList []string, appErr util.AppErr) {
+func (s *storage) listFilesInDesc(dirPath string) (fileNameList []string, libErr errorlibs.Err) {
 	files, err := os.ReadDir(dirPath)
 	if err != nil {
-		return nil, util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
+		return nil, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 
 	for _, f := range files {
@@ -20,10 +20,10 @@ func (s *storage) listFilesInDesc(dirPath string) (fileNameList []string, appErr
 	return fileNameList, nil
 }
 
-func (s *storage) createFile(filePath string) util.AppErr {
+func (s *storage) createFile(filePath string) errorlibs.Err {
 	f, err := os.Create(filePath)
 	if err != nil {
-		return util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
+		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 	defer f.Close()
 	return nil

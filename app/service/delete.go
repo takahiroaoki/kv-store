@@ -7,8 +7,8 @@ import (
 )
 
 func (s *kvServiceServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	if appErr := s.storage.DeleteKey(ctx, req.Key); appErr != nil {
-		return nil, handleError(ctx, appErr)
+	if libErr := s.storage.DeleteKey(ctx, req.Key); libErr != nil {
+		return nil, handleError(ctx, libErr)
 	}
 	return &pb.DeleteResponse{}, nil
 }

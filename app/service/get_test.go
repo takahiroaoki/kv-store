@@ -7,9 +7,9 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"github.com/takahiroaoki/go-libs/errorlibs"
 	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/storage"
-	"github.com/takahiroaoki/kv-store/app/util"
 	pb "github.com/takahiroaoki/protobuf/gen_go/proto/kv_store/v1"
 )
 
@@ -52,7 +52,7 @@ func TestKvServiceServer_Get(t *testing.T) {
 				},
 			},
 			setupMock: func(s *storage.MockStorage) {
-				s.EXPECT().GetByKey(gomock.Any(), "key").Return(model.KeyValue{}, util.NewAppErr(errors.New("error"), util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR))
+				s.EXPECT().GetByKey(gomock.Any(), "key").Return(model.KeyValue{}, errorlibs.NewErr(errors.New("error"), errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR))
 			},
 			assertion:  assert.Error,
 			want:       nil,

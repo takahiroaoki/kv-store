@@ -20,14 +20,14 @@ func main() {
 	timelibs.SetLocation(time.FixedZone("JST", 9*60*60))
 
 	// Prepare grpc server settings
-	sc, appErr := config.NewStorageConfig()
-	if appErr != nil {
-		util.FatalLog(fmt.Sprintf("Failed to load storage config: %v", appErr.Error()))
+	sc, libErr := config.NewStorageConfig()
+	if libErr != nil {
+		util.FatalLog(fmt.Sprintf("Failed to load storage config: %v", libErr.Error()))
 		return
 	}
-	storage, appErr := storage.NewStorage(sc)
-	if appErr != nil {
-		util.FatalLog(fmt.Sprintf("Failed to initialize storage: %v", appErr.Error()))
+	storage, libErr := storage.NewStorage(sc)
+	if libErr != nil {
+		util.FatalLog(fmt.Sprintf("Failed to initialize storage: %v", libErr.Error()))
 		return
 	}
 
