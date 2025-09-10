@@ -2,29 +2,32 @@ package storage
 
 import (
 	"testing"
+	"time"
 
-	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	proctime "github.com/takahiroaoki/go-libs/time"
 	"github.com/takahiroaoki/kv-store/app/model"
-	"github.com/takahiroaoki/kv-store/app/util"
 )
 
 func Test_newLogRow(t *testing.T) {
+	jst := time.FixedZone("JST", 9*60*60)
+	proctime.SetLocation(jst)
+	originalFunc := proctime.Now
+	defer func() { proctime.Now = originalFunc }()
+	proctime.Now = func() proctime.Time {
+		return proctime.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, jst))
+	}
 	type args struct {
 		kv       model.KeyValue
 		isDelete bool
 	}
 	tests := []struct {
-		name      string
-		args      args
-		setupMock func(t *util.MockAppTime)
-		want      logRow
+		name string
+		args args
+		want logRow
 	}{
 		{
 			name: "isDelete: false",
-			setupMock: func(t *util.MockAppTime) {
-				t.EXPECT().Format().Return("2024-01-01T00:00:00.000")
-			},
 			args: args{
 				kv: model.KeyValue{
 					Key:   "key",
@@ -36,14 +39,11 @@ func Test_newLogRow(t *testing.T) {
 				key:       "key",
 				value:     "value",
 				delFlag:   "0",
-				updatedAt: "2024-01-01T00:00:00.000",
+				updatedAt: "2024-01-01T00:00:00",
 			},
 		},
 		{
 			name: "isDelete: true",
-			setupMock: func(t *util.MockAppTime) {
-				t.EXPECT().Format().Return("2024-01-01T00:00:00.000")
-			},
 			args: args{
 				kv: model.KeyValue{
 					Key:   "key",
@@ -55,23 +55,12 @@ func Test_newLogRow(t *testing.T) {
 				key:       "key",
 				value:     "value",
 				delFlag:   "1",
-				updatedAt: "2024-01-01T00:00:00.000",
+				updatedAt: "2024-01-01T00:00:00",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			mockTime := util.NewMockAppTime(ctrl)
-
-			originalFunc := util.Now
-			defer func() { util.Now = originalFunc }()
-			util.Now = func() util.AppTime {
-				return mockTime
-			}
-
-			tt.setupMock(mockTime)
 			assert.Equal(t, tt.want, newLogRow(tt.args.kv, tt.args.isDelete))
 		})
 	}

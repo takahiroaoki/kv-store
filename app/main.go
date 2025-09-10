@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
+	proctime "github.com/takahiroaoki/go-libs/time"
 	"github.com/takahiroaoki/kv-store/app/config"
 	"github.com/takahiroaoki/kv-store/app/service"
 	"github.com/takahiroaoki/kv-store/app/storage"
@@ -14,6 +16,10 @@ import (
 )
 
 func main() {
+	// Global setting
+	proctime.SetLocation(time.FixedZone("JST", 9*60*60))
+
+	// Prepare grpc server settings
 	sc, appErr := config.NewStorageConfig()
 	if appErr != nil {
 		util.FatalLog(fmt.Sprintf("Failed to load storage config: %v", appErr.Error()))
@@ -25,7 +31,6 @@ func main() {
 		return
 	}
 
-	// Prepare grpc server settings
 	server := service.NewGRPCServer(storage)
 	lis, err := net.Listen("tcp", ":3000")
 	if err != nil {
