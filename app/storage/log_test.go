@@ -5,17 +5,17 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	proctime "github.com/takahiroaoki/go-libs/time"
+	"github.com/takahiroaoki/go-libs/timelibs"
 	"github.com/takahiroaoki/kv-store/app/model"
 )
 
 func Test_newLogRow(t *testing.T) {
 	jst := time.FixedZone("JST", 9*60*60)
-	proctime.SetLocation(jst)
-	originalFunc := proctime.Now
-	defer func() { proctime.Now = originalFunc }()
-	proctime.Now = func() proctime.Time {
-		return proctime.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, jst))
+	timelibs.SetLocation(jst)
+	originalFunc := timelibs.Now
+	defer func() { timelibs.Now = originalFunc }()
+	timelibs.Now = func() timelibs.Time {
+		return timelibs.NewTime(time.Date(2024, 1, 1, 0, 0, 0, 0, jst))
 	}
 	type args struct {
 		kv       model.KeyValue

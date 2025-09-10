@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strconv"
 
-	strings "github.com/takahiroaoki/go-libs/string"
-	"github.com/takahiroaoki/go-libs/time"
+	"github.com/takahiroaoki/go-libs/stringlibs"
+	"github.com/takahiroaoki/go-libs/timelibs"
 	"github.com/takahiroaoki/kv-store/app/model"
 	"github.com/takahiroaoki/kv-store/app/util"
 )
@@ -36,7 +36,7 @@ func newLogRow(kv model.KeyValue, isDelete bool) logRow {
 		key:       kv.Key,
 		value:     kv.Value,
 		delFlag:   delFlag,
-		updatedAt: time.Now().Format("2006-01-02T15:04:05"),
+		updatedAt: timelibs.Now().Format("2006-01-02T15:04:05"),
 	}
 }
 
@@ -50,14 +50,14 @@ func newKeyValueFromLogRow(row logRow) model.KeyValue {
 func (s *storage) nextLogFileName(currentLogFileName string) (string, util.AppErr) {
 	prefix, postfix := "log.", ".csv"
 	if len(currentLogFileName) == 0 {
-		return prefix + strings.PadStart("0", "0", s.sc.MaxPowerLogFile()) + postfix, nil
+		return prefix + stringlibs.PadStart("0", "0", s.sc.MaxPowerLogFile()) + postfix, nil
 	}
 	currNumStr := currentLogFileName[len(prefix) : len(currentLogFileName)-len(postfix)]
 	currNum, err := strconv.Atoi(currNumStr)
 	if err != nil {
 		return "", util.NewAppErr(err, util.CAUSE_INTERNAL, util.LOG_LEVEL_ERROR)
 	}
-	return prefix + strings.PadStart(strconv.Itoa(currNum+1), "0", s.sc.MaxPowerLogFile()) + postfix, nil
+	return prefix + stringlibs.PadStart(strconv.Itoa(currNum+1), "0", s.sc.MaxPowerLogFile()) + postfix, nil
 }
 
 func (s *storage) nextLogFilePath() (string, util.AppErr) {
