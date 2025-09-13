@@ -48,123 +48,105 @@ func newKeyValueFromLogRow(row logRow) model.KeyValue {
 }
 
 func (s *storage) nextLogFileName(currentLogFileName string) (string, errorlibs.Err) {
-	prefix, postfix := "log.", ".csv"
-	if len(currentLogFileName) == 0 {
-		return prefix + stringlibs.PadStart("0", "0", s.sc.MaxPowerLogFile()) + postfix, nil
-	}
-	currNumStr := currentLogFileName[len(prefix) : len(currentLogFileName)-len(postfix)]
+	currNumStr := currentLogFileName[len(logFilePrefix) : len(currentLogFileName)-len(csvExt)]
 	currNum, err := strconv.Atoi(currNumStr)
 	if err != nil {
 		return "", errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
-	return prefix + stringlibs.PadStart(strconv.Itoa(currNum+1), "0", s.sc.MaxPowerLogFile()) + postfix, nil
+	return logFilePrefix + stringlibs.PadStart(strconv.Itoa(currNum+1), "0", s.sc.MaxPowerLogFile()) + csvExt, nil
 }
 
-func (s *storage) nextLogFilePath() (string, errorlibs.Err) {
+func (s *storage) nextLogFilePath() (string, int, errorlibs.Err) { // (logFilePath string, len(records) int, libErr errorlibs.Err)
 	logFileNameList, libErr := s.listFilesInDesc(s.sc.LogDir())
 	if libErr != nil {
-		return "", libErr
+		return "", 0, libErr
 	}
 	if len(logFileNameList) == 0 {
-		nextFileName, libErr := s.nextLogFileName("")
-		if libErr != nil {
-			return "", libErr
-		}
-		filePath := filepath.Join(s.sc.LogDir(), nextFileName)
-		libErr = s.createFile(filePath)
-		if libErr != nil {
-			return "", libErr
-		}
-		return filePath, nil
+		return "", 0, errorlibs.NewErrFromMsg("not setup yet", errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 
 	latestFileName := logFileNameList[0]
 	f, err := os.Open(filepath.Join(s.sc.LogDir(), latestFileName))
 	if err != nil {
-		return "", errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+		return "", 0, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 	defer f.Close()
 
 	reader := csv.NewReader(f)
 	records, err := reader.ReadAll()
 	if err != nil {
-		return "", errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+		return "", 0, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 
 	if len(records) < s.sc.RowsPerLogFile() {
-		return filepath.Join(s.sc.LogDir(), latestFileName), nil
+		return filepath.Join(s.sc.LogDir(), latestFileName), len(records), nil
 	}
 
 	nextFileName, libErr := s.nextLogFileName(latestFileName)
 	if libErr != nil {
-		return "", libErr
+		return "", 0, libErr
 	}
 	nextFilePath := filepath.Join(s.sc.LogDir(), nextFileName)
 	libErr = s.createFile(nextFilePath)
 	if libErr != nil {
-		return "", libErr
+		return "", 0, libErr
 	}
-	return nextFilePath, nil
+	return nextFilePath, 0, nil
 }
 
 func (s *storage) insertLogRow(ctx context.Context, row logRow) errorlibs.Err {
-	path, libErr := s.nextLogFilePath()
+	logFilePath, records, libErr := s.nextLogFilePath()
 	if libErr != nil {
 		return libErr
 	}
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
 		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
-	defer f.Close()
+	defer logFile.Close()
 
-	writer := csv.NewWriter(f)
+	writer := csv.NewWriter(logFile)
 	defer writer.Flush()
 
 	if err := writer.Write([]string{row.key, row.value, string(row.delFlag), row.updatedAt}); err != nil {
 		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
+
+	if libErr := s.updateIndex(ctx, row.key, s.logFilePathToName(logFilePath), records+1); libErr != nil {
+		return libErr
+	}
 	return nil
 }
 
 func (s *storage) lookupTheLatestLogRow(ctx context.Context, key string) (logRow, errorlibs.Err) {
-	logFileNameList, libErr := s.listFilesInDesc(s.sc.LogDir())
+	idxVal, libErr := s.lookupLatestIndex(ctx, key)
 	if libErr != nil {
 		return logRow{}, libErr
 	}
-	if len(logFileNameList) == 0 {
-		return logRow{}, dataNotFound
+
+	logFilePath := filepath.Join(s.sc.LogDir(), idxVal.FileName)
+	f, err := os.Open(logFilePath)
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
+	defer f.Close()
 
-	for _, fileName := range logFileNameList {
-		f, err := os.Open(filepath.Join(s.sc.LogDir(), fileName))
-		if err != nil {
-			return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-		}
-		defer f.Close()
-
-		reader := csv.NewReader(f)
-		records, err := reader.ReadAll()
-		if err != nil {
-			return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-		}
-
-		for i := len(records) - 1; i >= 0; i-- {
-			if len(records[i]) < 4 {
-				continue // skip illegal row
-			}
-			if records[i][0] == key {
-				return logRow{
-					key:       records[i][0],
-					value:     records[i][1],
-					delFlag:   boolStr(records[i][2]),
-					updatedAt: records[i][3],
-				}, nil
-			}
-		}
+	reader := csv.NewReader(f)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
-
-	return logRow{}, dataNotFound
+	line, err := strconv.Atoi(idxVal.Line)
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	target := records[line-1]
+	return logRow{
+		key:       target[0],
+		value:     target[1],
+		delFlag:   boolStr(target[2]),
+		updatedAt: target[3],
+	}, nil
 }
 
 func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) errorlibs.Err {
