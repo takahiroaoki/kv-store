@@ -67,7 +67,12 @@ func (s *storage) updateIndex(ctx context.Context, key string, logFileName strin
 	}
 	defer tmpF.Close()
 
-	s.overwrite(idxFilePath, tmpIdxFilePath)
+	if libErr := s.overwrite(idxFilePath, tmpIdxFilePath); libErr != nil {
+		if err := os.Remove(tmpIdxFilePath); err != nil {
+			util.WarnLog(err.Error())
+		}
+		return libErr
+	}
 	return nil
 }
 
