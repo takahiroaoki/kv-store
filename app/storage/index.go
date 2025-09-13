@@ -30,7 +30,6 @@ func (s *storage) readIndex(indexFilePath string) (indexMap, errorlibs.Err) {
 	dcd := gob.NewDecoder(f)
 
 	if err := dcd.Decode(&idxMap); err != nil && err != io.EOF {
-		util.InfoLog(fmt.Sprintf("%v", idxMap))
 		return idxMap, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 	return idxMap, nil
@@ -65,7 +64,7 @@ func (s *storage) updateIndex(key string, logFileName string, line int) errorlib
 	if err := ecd.Encode(idxMap); err != nil {
 		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
-	tmpF.Close()
+	defer tmpF.Close()
 
 	s.overwrite(idxFilePath, tmpIdxFilePath)
 	return nil
