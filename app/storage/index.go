@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -20,7 +21,7 @@ type indexValue struct {
 
 type indexMap map[string]indexValue
 
-func (s *storage) readIndex(indexFilePath string) (indexMap, errorlibs.Err) {
+func (s *storage) readIndex(ctx context.Context, indexFilePath string) (indexMap, errorlibs.Err) {
 	idxMap := indexMap{}
 	f, err := os.Open(indexFilePath)
 	if err != nil {
@@ -35,13 +36,13 @@ func (s *storage) readIndex(indexFilePath string) (indexMap, errorlibs.Err) {
 	return idxMap, nil
 }
 
-func (s *storage) updateIndex(key string, logFileName string, line int) errorlibs.Err {
+func (s *storage) updateIndex(ctx context.Context, key string, logFileName string, line int) errorlibs.Err {
 	idxFilePath, libErr := s.indexFilePathFromLogFileName(logFileName)
 	if libErr != nil {
 		return libErr
 	}
 
-	idxMap, libErr := s.readIndex(idxFilePath)
+	idxMap, libErr := s.readIndex(ctx, idxFilePath)
 	if libErr != nil {
 		return libErr
 	}
@@ -84,4 +85,25 @@ func (s *storage) indexFilePathFromLogFileName(logFileName string) (string, erro
 		return "", libErr
 	}
 	return idxFilePath, nil
+}
+
+func (s *storage) lookupLatestIndex(ctx context.Context, key string) (indexValue, errorlibs.Err) {
+	idxFileNameList, libErr := s.listFilesInDesc(s.sc.IndexDir())
+	if libErr != nil {
+		return indexValue{}, libErr
+	}
+	if len(idxFileNameList) == 0 {
+		return indexValue{}, dataNotFound
+	}
+
+	for _, idxFileName := range idxFileNameList {
+		idxMap, libErr := s.readIndex(ctx, filepath.Join(s.sc.IndexDir(), idxFileName))
+		if libErr != nil {
+			return indexValue{}, libErr
+		}
+		if idxVal, ok := idxMap[key]; ok {
+			return idxVal, nil
+		}
+	}
+	return indexValue{}, dataNotFound
 }

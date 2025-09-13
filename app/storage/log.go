@@ -112,34 +112,16 @@ func (s *storage) insertLogRow(ctx context.Context, row logRow) errorlibs.Err {
 		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
 
-	if libErr := s.updateIndex(row.key, s.logFilePathToName(logFilePath), records+1); libErr != nil {
+	if libErr := s.updateIndex(ctx, row.key, s.logFilePathToName(logFilePath), records+1); libErr != nil {
 		return libErr
 	}
 	return nil
 }
 
 func (s *storage) lookupTheLatestLogRow(ctx context.Context, key string) (logRow, errorlibs.Err) {
-	idxFileNameList, libErr := s.listFilesInDesc(s.sc.IndexDir())
+	idxVal, libErr := s.lookupLatestIndex(ctx, key)
 	if libErr != nil {
 		return logRow{}, libErr
-	}
-	if len(idxFileNameList) == 0 {
-		return logRow{}, dataNotFound
-	}
-
-	var idxVal indexValue
-	for _, idxFileName := range idxFileNameList {
-		idxMap, libErr := s.readIndex(filepath.Join(s.sc.IndexDir(), idxFileName))
-		if libErr != nil {
-			return logRow{}, libErr
-		}
-		if _, ok := idxMap[key]; ok {
-			idxVal = idxMap[key]
-			break
-		}
-	}
-	if len(idxVal.FileName) == 0 {
-		return logRow{}, dataNotFound
 	}
 
 	logFilePath := filepath.Join(s.sc.LogDir(), idxVal.FileName)
