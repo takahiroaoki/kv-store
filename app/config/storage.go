@@ -29,6 +29,10 @@ func (c *StorageConfig) LogDir() string {
 	return filepath.Join(c.storageDir, "logs")
 }
 
+func (c *StorageConfig) IndexDir() string {
+	return filepath.Join(c.storageDir, "indexes")
+}
+
 func NewStorageConfig() (StorageConfig, errorlibs.Err) {
 	rowsPerLogFile, err := strconv.Atoi(env.rowsPerLogFile)
 	if err != nil {
