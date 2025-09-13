@@ -119,43 +119,52 @@ func (s *storage) insertLogRow(ctx context.Context, row logRow) errorlibs.Err {
 }
 
 func (s *storage) lookupTheLatestLogRow(ctx context.Context, key string) (logRow, errorlibs.Err) {
-	logFileNameList, libErr := s.listFilesInDesc(s.sc.LogDir())
+	idxFileNameList, libErr := s.listFilesInDesc(s.sc.IndexDir())
 	if libErr != nil {
 		return logRow{}, libErr
 	}
-	if len(logFileNameList) == 0 {
+	if len(idxFileNameList) == 0 {
 		return logRow{}, dataNotFound
 	}
 
-	for _, fileName := range logFileNameList {
-		f, err := os.Open(filepath.Join(s.sc.LogDir(), fileName))
-		if err != nil {
-			return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	var idxVal indexValue
+	for _, idxFileName := range idxFileNameList {
+		idxMap, libErr := s.readIndex(filepath.Join(s.sc.IndexDir(), idxFileName))
+		if libErr != nil {
+			return logRow{}, libErr
 		}
-		defer f.Close()
-
-		reader := csv.NewReader(f)
-		records, err := reader.ReadAll()
-		if err != nil {
-			return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-		}
-
-		for i := len(records) - 1; i >= 0; i-- {
-			if len(records[i]) < 4 {
-				continue // skip illegal row
-			}
-			if records[i][0] == key {
-				return logRow{
-					key:       records[i][0],
-					value:     records[i][1],
-					delFlag:   boolStr(records[i][2]),
-					updatedAt: records[i][3],
-				}, nil
-			}
+		if _, ok := idxMap[key]; ok {
+			idxVal = idxMap[key]
+			break
 		}
 	}
+	if len(idxVal.FileName) == 0 {
+		return logRow{}, dataNotFound
+	}
 
-	return logRow{}, dataNotFound
+	logFilePath := filepath.Join(s.sc.LogDir(), idxVal.FileName)
+	f, err := os.Open(logFilePath)
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	defer f.Close()
+
+	reader := csv.NewReader(f)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	line, err := strconv.Atoi(idxVal.Line)
+	if err != nil {
+		return logRow{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	target := records[line-1]
+	return logRow{
+		key:       target[0],
+		value:     target[1],
+		delFlag:   boolStr(target[2]),
+		updatedAt: target[3],
+	}, nil
 }
 
 func (s *storage) InsertKeyValue(ctx context.Context, kv model.KeyValue) errorlibs.Err {
