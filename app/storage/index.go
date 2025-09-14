@@ -50,25 +50,7 @@ func (s *storage) updateIndex(ctx context.Context, key string, logFileName strin
 		Line:     strconv.Itoa(line),
 	}
 
-	tmpIdxFilePath := idxFilePath + ".tmp"
-	if libErr := s.createFile(tmpIdxFilePath); libErr != nil {
-		return libErr
-	}
-	tmpF, err := os.OpenFile(tmpIdxFilePath, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-	}
-
-	ecd := gob.NewEncoder(tmpF)
-	if err := ecd.Encode(idxMap); err != nil {
-		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-	}
-	defer tmpF.Close()
-
-	if libErr := s.overwrite(idxFilePath, tmpIdxFilePath); libErr != nil {
-		if err := os.Remove(tmpIdxFilePath); err != nil {
-			util.WarnLog(err.Error())
-		}
+	if libErr := s.updateIndexFile(idxFilePath, idxMap); libErr != nil {
 		return libErr
 	}
 	return nil
@@ -131,28 +113,12 @@ func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
 		mergedIdxMap = s.mergeIndexMap(mergedIdxMap, idxMap)
 	}
 
-	oldIdxFilePath := filepath.Join(s.sc.IndexDir(), idxFileNameList[len(idxFileNameList)-1])
-	tmpIdxFilePath := oldIdxFilePath + ".tmp"
-	if libErr := s.createFile(tmpIdxFilePath); libErr != nil {
+	targetIdxFilePath := filepath.Join(s.sc.IndexDir(), idxFileNameList[len(idxFileNameList)-1])
+	if libErr := s.updateIndexFile(targetIdxFilePath, mergedIdxMap); libErr != nil {
 		return libErr
 	}
-	tmpF, err := os.OpenFile(tmpIdxFilePath, os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-	}
 
-	ecd := gob.NewEncoder(tmpF)
-	if err := ecd.Encode(mergedIdxMap); err != nil {
-		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
-	}
-	defer tmpF.Close()
-
-	if libErr := s.overwrite(oldIdxFilePath, tmpIdxFilePath); libErr != nil {
-		if err := os.Remove(tmpIdxFilePath); err != nil {
-			util.WarnLog(err.Error())
-		}
-		return libErr
-	}
+	// Delete merged index files.
 	for _, name := range idxFileNameList[:len(idxFileNameList)-2] {
 		if err := os.Remove(filepath.Join(s.sc.IndexDir(), name)); err != nil {
 			return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
@@ -166,4 +132,29 @@ func (s *storage) mergeIndexMap(base, updater indexMap) indexMap {
 		base[k] = v
 	}
 	return base
+}
+
+func (s *storage) updateIndexFile(targetFilePath string, newIdxMap indexMap) errorlibs.Err {
+	tmpFilePath := targetFilePath + ".tmp"
+	if libErr := s.createFile(tmpFilePath); libErr != nil {
+		return libErr
+	}
+	tmpF, err := os.OpenFile(tmpFilePath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	defer tmpF.Close()
+
+	ecd := gob.NewEncoder(tmpF)
+	if err := ecd.Encode(newIdxMap); err != nil {
+		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+
+	if libErr := s.overwrite(targetFilePath, tmpFilePath); libErr != nil {
+		if err := os.Remove(tmpFilePath); err != nil {
+			util.WarnLog(err.Error())
+		}
+		return libErr
+	}
+	return nil
 }
