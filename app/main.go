@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -44,6 +45,17 @@ func main() {
 		}
 	}()
 	util.InfoLog("gRPC server started successfully")
+
+	// Merge indexes
+	go func() {
+		ctx := context.Background()
+		for {
+			if libErr := storage.MergeIndexes(ctx); libErr != nil {
+				util.ErrorLog(fmt.Sprintf("Failed to merge indexes: %v", libErr.Error()))
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	// Shutdown settings
 	quitCh := make(chan os.Signal, 1)
