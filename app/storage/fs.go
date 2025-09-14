@@ -25,8 +25,7 @@ func (s *storage) listFilesInAsc(dirPath string) (fileNameList []string, libErr 
 	if libErr != nil {
 		return []string{}, nil
 	}
-	sort.Sort(sort.StringSlice(fileNameList))
-	return fileNameList, nil
+	return sort.StringSlice(fileNameList), nil
 }
 
 func (s *storage) listFilesInDesc(dirPath string) (fileNameList []string, libErr errorlibs.Err) {
