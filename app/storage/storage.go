@@ -15,6 +15,7 @@ type Storage interface {
 	InsertKeyValue(ctx context.Context, kv model.KeyValue) errorlibs.Err
 	DeleteKey(ctx context.Context, key string) errorlibs.Err
 	GetByKey(ctx context.Context, key string) (model.KeyValue, errorlibs.Err)
+	MergeIndexes(ctx context.Context) errorlibs.Err
 }
 
 type storage struct {

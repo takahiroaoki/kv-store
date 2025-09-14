@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"encoding/gob"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -50,7 +49,6 @@ func (s *storage) updateIndex(ctx context.Context, key string, logFileName strin
 		FileName: logFileName,
 		Line:     strconv.Itoa(line),
 	}
-	util.InfoLog(fmt.Sprintf("new indexMap: %v", idxMap))
 
 	tmpIdxFilePath := idxFilePath + ".tmp"
 	if libErr := s.createFile(tmpIdxFilePath); libErr != nil {
@@ -111,4 +109,61 @@ func (s *storage) lookupLatestIndex(ctx context.Context, key string) (indexValue
 		}
 	}
 	return indexValue{}, dataNotFound
+}
+
+func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
+	idxFileNameList, libErr := s.listFilesInDesc(s.sc.IndexDir())
+	if libErr != nil {
+		return libErr
+	}
+	if len(idxFileNameList) <= s.sc.IndexMergeBatchSize() {
+		util.InfoLog("not necessary for index merge")
+		return nil
+	}
+
+	mergedIdxMap := indexMap{}
+	// The latest index file is not in target because it can be updated by API requests.
+	for _, name := range idxFileNameList[1:] {
+		idxMap, libErr := s.readIndex(ctx, filepath.Join(s.sc.IndexDir(), name))
+		if libErr != nil {
+			return libErr
+		}
+		mergedIdxMap = s.mergeIndexMap(mergedIdxMap, idxMap)
+	}
+
+	oldIdxFilePath := filepath.Join(s.sc.IndexDir(), idxFileNameList[1])
+	tmpIdxFilePath := oldIdxFilePath + ".tmp"
+	if libErr := s.createFile(tmpIdxFilePath); libErr != nil {
+		return libErr
+	}
+	tmpF, err := os.OpenFile(tmpIdxFilePath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+
+	ecd := gob.NewEncoder(tmpF)
+	if err := ecd.Encode(mergedIdxMap); err != nil {
+		return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
+	defer tmpF.Close()
+
+	if libErr := s.overwrite(oldIdxFilePath, tmpIdxFilePath); libErr != nil {
+		if err := os.Remove(tmpIdxFilePath); err != nil {
+			util.WarnLog(err.Error())
+		}
+		return libErr
+	}
+	for _, name := range idxFileNameList[2:] {
+		if err := os.Remove(filepath.Join(s.sc.IndexDir(), name)); err != nil {
+			return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+		}
+	}
+	return nil
+}
+
+func (s *storage) mergeIndexMap(map1, map2 indexMap) indexMap {
+	for k, v := range map2 {
+		map1[k] = v
+	}
+	return map1
 }

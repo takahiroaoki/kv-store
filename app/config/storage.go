@@ -8,9 +8,10 @@ import (
 )
 
 type StorageConfig struct {
-	storageDir      string
-	rowsPerLogFile  int
-	maxPowerLogFile int
+	storageDir          string
+	rowsPerLogFile      int
+	maxPowerLogFile     int
+	indexMergeBatchSize int
 }
 
 func (c *StorageConfig) StorageDir() string {
@@ -23,6 +24,10 @@ func (c *StorageConfig) RowsPerLogFile() int {
 
 func (c *StorageConfig) MaxPowerLogFile() int {
 	return c.maxPowerLogFile
+}
+
+func (c *StorageConfig) IndexMergeBatchSize() int {
+	return c.indexMergeBatchSize
 }
 
 func (c *StorageConfig) LogDir() string {
@@ -42,9 +47,14 @@ func NewStorageConfig() (StorageConfig, errorlibs.Err) {
 	if err != nil {
 		return StorageConfig{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 	}
+	indexMergeBatchSize, err := strconv.Atoi(env.indexMergeBatchSize)
+	if err != nil {
+		return StorageConfig{}, errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
+	}
 	return StorageConfig{
-		storageDir:      env.storageDir,
-		rowsPerLogFile:  rowsPerLogFile,
-		maxPowerLogFile: maxPowerLogFile,
+		storageDir:          env.storageDir,
+		rowsPerLogFile:      rowsPerLogFile,
+		maxPowerLogFile:     maxPowerLogFile,
+		indexMergeBatchSize: indexMergeBatchSize,
 	}, nil
 }
