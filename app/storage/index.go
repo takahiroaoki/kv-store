@@ -112,7 +112,7 @@ func (s *storage) lookupLatestIndex(ctx context.Context, key string) (indexValue
 }
 
 func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
-	idxFileNameList, libErr := s.listFilesInDesc(s.sc.IndexDir())
+	idxFileNameList, libErr := s.listFilesInAsc(s.sc.IndexDir())
 	if libErr != nil {
 		return libErr
 	}
@@ -123,7 +123,7 @@ func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
 
 	mergedIdxMap := indexMap{}
 	// The latest index file is not in target because it can be updated by API requests.
-	for _, name := range idxFileNameList[1:] {
+	for _, name := range idxFileNameList[:len(idxFileNameList)-1] {
 		idxMap, libErr := s.readIndex(ctx, filepath.Join(s.sc.IndexDir(), name))
 		if libErr != nil {
 			return libErr
@@ -131,7 +131,7 @@ func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
 		mergedIdxMap = s.mergeIndexMap(mergedIdxMap, idxMap)
 	}
 
-	oldIdxFilePath := filepath.Join(s.sc.IndexDir(), idxFileNameList[1])
+	oldIdxFilePath := filepath.Join(s.sc.IndexDir(), idxFileNameList[len(idxFileNameList)-1])
 	tmpIdxFilePath := oldIdxFilePath + ".tmp"
 	if libErr := s.createFile(tmpIdxFilePath); libErr != nil {
 		return libErr
@@ -153,7 +153,7 @@ func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
 		}
 		return libErr
 	}
-	for _, name := range idxFileNameList[2:] {
+	for _, name := range idxFileNameList[:len(idxFileNameList)-2] {
 		if err := os.Remove(filepath.Join(s.sc.IndexDir(), name)); err != nil {
 			return errorlibs.NewErr(err, errorlibs.CAUSE_INTERNAL, errorlibs.LOG_LEVEL_ERROR)
 		}
@@ -161,9 +161,9 @@ func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {
 	return nil
 }
 
-func (s *storage) mergeIndexMap(map1, map2 indexMap) indexMap {
-	for k, v := range map2 {
-		map1[k] = v
+func (s *storage) mergeIndexMap(base, updater indexMap) indexMap {
+	for k, v := range updater {
+		base[k] = v
 	}
-	return map1
+	return base
 }

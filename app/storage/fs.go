@@ -20,6 +20,15 @@ var (
 	logFilePathRegexp = regexp.MustCompile(`(.+)log\.(\d+)\.csv`)
 )
 
+func (s *storage) listFilesInAsc(dirPath string) (fileNameList []string, libErr errorlibs.Err) {
+	fileNameList, libErr = s.listFiles(dirPath)
+	if libErr != nil {
+		return []string{}, nil
+	}
+	sort.Sort(sort.StringSlice(fileNameList))
+	return fileNameList, nil
+}
+
 func (s *storage) listFilesInDesc(dirPath string) (fileNameList []string, libErr errorlibs.Err) {
 	fileNameList, libErr = s.listFiles(dirPath)
 	if libErr != nil {
