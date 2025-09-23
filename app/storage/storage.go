@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/takahiroaoki/go-libs/errorlibs"
 	"github.com/takahiroaoki/go-libs/stringlibs"
@@ -20,6 +21,7 @@ type Storage interface {
 
 type storage struct {
 	sc config.StorageConfig
+	mutex sync.Mutex
 }
 
 func (s *storage) setupFirstLogFile() errorlibs.Err {

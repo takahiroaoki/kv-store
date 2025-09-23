@@ -95,6 +95,9 @@ func (s *storage) nextLogFilePath() (string, int, errorlibs.Err) { // (logFilePa
 }
 
 func (s *storage) insertLogRow(ctx context.Context, row logRow) errorlibs.Err {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
 	logFilePath, records, libErr := s.nextLogFilePath()
 	if libErr != nil {
 		return libErr
