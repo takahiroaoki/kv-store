@@ -166,7 +166,7 @@ func (s *storage) GetByKey(ctx context.Context, key string) (model.KeyValue, err
 		return model.KeyValue{}, libErr
 	}
 	if logRow.delFlag == trueStr {
-		return model.KeyValue{}, dataNotFound
+		return model.KeyValue{}, errorlibs.NewErrFromMsg("data not found", errorlibs.CAUSE_NOT_FOUND, errorlibs.LOG_LEVEL_INFO)
 	}
 	return newKeyValueFromLogRow(logRow), nil
 }

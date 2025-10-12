@@ -17,13 +17,13 @@ func handleError(ctx context.Context, libErr errorlibs.Err) error {
 
 	switch libErr.LogLevel() {
 	case errorlibs.LOG_LEVEL_INFO:
-		util.InfoLogWithContext(ctx, libErr.Error())
+		util.InfoLogWithContext(ctx, libErr.ErrorWithStackTrace())
 	case errorlibs.LOG_LEVEL_WARN:
-		util.WarnLogWithContext(ctx, libErr.Error())
+		util.WarnLogWithContext(ctx, libErr.ErrorWithStackTrace())
 	case errorlibs.LOG_LEVEL_ERROR:
-		util.ErrorLogWithContext(ctx, libErr.Error())
+		util.ErrorLogWithContext(ctx, libErr.ErrorWithStackTrace())
 	default:
-		util.ErrorLogWithContext(ctx, fmt.Sprintf("error with no log level: %s", libErr.Error()))
+		util.ErrorLogWithContext(ctx, fmt.Sprintf("error with no log level: %s", libErr.ErrorWithStackTrace()))
 	}
 
 	var errMap = map[errorlibs.ErrorCause]error{
@@ -35,7 +35,7 @@ func handleError(ctx context.Context, libErr errorlibs.Err) error {
 
 	switch libErr.Cause() {
 	case errorlibs.CAUSE_UNDEFINED:
-		util.ErrorLogWithContext(ctx, fmt.Sprintf("error with no cause: %s", libErr.Error()))
+		util.ErrorLogWithContext(ctx, fmt.Sprintf("error with no cause: %s", libErr.ErrorWithStackTrace()))
 		return errMap[libErr.Cause()]
 	default:
 		return errMap[libErr.Cause()]

@@ -78,7 +78,7 @@ func (s *storage) lookupLatestIndex(ctx context.Context, key string) (indexValue
 		return indexValue{}, libErr
 	}
 	if len(idxFileNameList) == 0 {
-		return indexValue{}, dataNotFound
+		return indexValue{}, errorlibs.NewErrFromMsg("data not found", errorlibs.CAUSE_NOT_FOUND, errorlibs.LOG_LEVEL_INFO)
 	}
 
 	for _, idxFileName := range idxFileNameList {
@@ -90,7 +90,7 @@ func (s *storage) lookupLatestIndex(ctx context.Context, key string) (indexValue
 			return idxVal, nil
 		}
 	}
-	return indexValue{}, dataNotFound
+	return indexValue{}, errorlibs.NewErrFromMsg("data not found", errorlibs.CAUSE_NOT_FOUND, errorlibs.LOG_LEVEL_INFO)
 }
 
 func (s *storage) MergeIndexes(ctx context.Context) errorlibs.Err {

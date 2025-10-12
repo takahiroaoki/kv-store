@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/stretchr/testify v1.11.1
-	github.com/takahiroaoki/go-libs v1.1.0
+	github.com/takahiroaoki/go-libs v1.2.0
 	github.com/takahiroaoki/protobuf/gen_go v1.1.0
 	google.golang.org/grpc v1.75.0
 )
